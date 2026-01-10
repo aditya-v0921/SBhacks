@@ -1,0 +1,6 @@
+numpy
+pybind11
+ultralytics
+python-socketio
+aiohttp
+influxdb-client

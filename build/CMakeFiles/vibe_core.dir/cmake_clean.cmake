@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/vibe_core.dir/vibeCheckCore.cpp.o"
   "CMakeFiles/vibe_core.dir/vibeCheckCore.cpp.o.d"
-  "vibe_core.cpython-313-darwin.so"
+  "vibe_core.cpython-314-darwin.so"
   "vibe_core.pdb"
 )
 

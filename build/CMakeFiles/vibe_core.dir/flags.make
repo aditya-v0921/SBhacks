@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -Dvibe_core_EXPORTS
 
-CXX_INCLUDES = -isystem /opt/homebrew/Cellar/opencv/4.13.0/include/opencv4 -isystem /Users/adi/sbHacks-1/.venv/lib/python3.13/site-packages/pybind11/include -isystem /Library/Frameworks/Python.framework/Versions/3.13/include/python3.13
+CXX_INCLUDES = -isystem /opt/homebrew/Cellar/opencv/4.13.0/include/opencv4 -isystem /Users/adi/sbHacks-1/.venv-brew/lib/python3.14/site-packages/pybind11/include -isystem /opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/include/python3.14
 
 CXX_FLAGSarm64 = -std=gnu++17 -arch arm64 -fPIC -fvisibility=hidden -flto
 
