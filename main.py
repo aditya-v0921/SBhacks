@@ -53,7 +53,7 @@ WEIGHT_MOVEMENT = 0.2
 
 INFLUX_ENABLED = True
 INFLUX_URL = "http://localhost:8086"
-INFLUX_TOKEN = "P6qMhteG793e4V1Sje3OTJ5H4zinv7C-zwuqqFQTLadGmf0Caxa1nOMv8djJJRpPdqZ6JoUT-uG8dJzSPYxCYQ=="
+INFLUX_TOKEN = "pkA51LUwnhh1PD8HCTiuRIumY3fDGkvUUc3vPFSbZPCawywk7adscprOUlpyhGJeiLm_2Rr8iZvJ6OxnoSs6hg=="
 INFLUX_ORG = "Crowd Check"
 INFLUX_BUCKET = "crowd_metrics"
 
