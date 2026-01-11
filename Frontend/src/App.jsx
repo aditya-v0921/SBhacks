@@ -3,10 +3,7 @@ import { io } from "socket.io-client";
 
 const SOCKET_URL = "http://localhost:8000";
 
-// ============================================================================
 // FAKE GENRE DATA FOR DEMO
-// Each genre has a COUNT (number of people who checked in with that genre)
-// ============================================================================
 
 const INITIAL_GENRES = [
   { name: "Deep House", count: 24 },
@@ -44,11 +41,6 @@ const INITIAL_CHECKINS = [
     genres: ["Progressive House", "Deep House", "Club Pop"],
     time: 12,
   },
-  {
-    name: "Chris T.",
-    genres: ["Melodic Techno", "Progressive House", "Afro House"],
-    time: 15,
-  },
 ];
 
 const FAKE_NAMES = [
@@ -58,7 +50,7 @@ const FAKE_NAMES = [
   "Casey B.",
   "Riley D.",
   "Quinn H.",
-  "Avery N.",
+  "Andre S.",
   "Jamie F.",
   "Drew K.",
   "Peyton M.",
@@ -69,21 +61,6 @@ const FAKE_NAMES = [
   "Blake W.",
 ];
 
-/**
- * AUTO-ANIMATION EXPLAINED:
- *
- * This hook simulates new people checking into the club.
- * Every 3 seconds, there's a 40% chance a new "person" checks in.
- *
- * When someone checks in:
- * 1. A random name is picked from FAKE_NAMES
- * 2. 3 random genres are assigned to them
- * 3. Each of those genres gets +1 to their count
- * 4. The genres are re-sorted by count (highest first)
- * 5. The new person appears in "Recent Check-ins"
- *
- * This creates a realistic live-updating effect for the demo.
- */
 function useSimulatedCheckins(enabled) {
   const [genres, setGenres] = useState(INITIAL_GENRES);
   const [checkins, setCheckins] = useState(INITIAL_CHECKINS);
@@ -91,21 +68,15 @@ function useSimulatedCheckins(enabled) {
 
   useEffect(() => {
     if (!enabled) return;
-
     const genreNames = INITIAL_GENRES.map((g) => g.name);
 
     const interval = setInterval(() => {
-      // 40% chance of new check-in each interval
       if (Math.random() > 0.6) {
-        // Pick random name
         const newName =
           FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)];
-
-        // Pick 3 unique random genres for this person
         const shuffled = [...genreNames].sort(() => Math.random() - 0.5);
         const newGenres = shuffled.slice(0, 3);
 
-        // Add to check-ins list (newest first, keep max 10)
         setCheckins((prev) => [
           {
             name: newName,
@@ -115,10 +86,8 @@ function useSimulatedCheckins(enabled) {
           ...prev.slice(0, 9),
         ]);
 
-        // Increment total
         setTotalCheckins((prev) => prev + 1);
 
-        // Update genre counts (+1 for each genre this person likes)
         setGenres((prev) => {
           const updated = prev.map((g) => {
             if (newGenres.includes(g.name)) {
@@ -126,14 +95,12 @@ function useSimulatedCheckins(enabled) {
             }
             return g;
           });
-          // Re-sort by count (highest first)
           return updated.sort((a, b) => b.count - a.count);
         });
       }
 
-      // Age the check-in times (for "X min ago" display)
       setCheckins((prev) => prev.map((c) => ({ ...c, time: c.time + 0.05 })));
-    }, 3000); // Run every 3 seconds
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [enabled]);
@@ -141,9 +108,122 @@ function useSimulatedCheckins(enabled) {
   return { genres, checkins, totalCheckins };
 }
 
-// ============================================================================
+// LIGHT CONTROL SYSTEM
+
+function getLightSettings(hypeScore, energy) {
+  const hype = hypeScore || 0;
+  const nrg = energy || 0;
+
+  if (hype > 0.7 || nrg > 10) {
+    return {
+      mode: "STROBE",
+      color: "#ff0044",
+      intensity: 100,
+      bpm: 140,
+      description: "High intensity strobe sync'd to beat",
+    };
+  } else if (hype > 0.4 || nrg > 5) {
+    return {
+      mode: "PULSE",
+      color: "#ff00ff",
+      intensity: 75,
+      bpm: 128,
+      description: "Rhythmic pulse with color wash",
+    };
+  } else if (hype > 0.2 || nrg > 2) {
+    return {
+      mode: "WAVE",
+      color: "#00ffff",
+      intensity: 50,
+      bpm: 120,
+      description: "Gentle wave across fixtures",
+    };
+  } else {
+    return {
+      mode: "AMBIENT",
+      color: "#4400ff",
+      intensity: 25,
+      bpm: 0,
+      description: "Low ambient glow",
+    };
+  }
+}
+
+function LightControlPanel({ hypeScore, energy }) {
+  const settings = getLightSettings(hypeScore, energy);
+
+  return (
+    <div className="light-panel">
+      <div className="light-header">
+        <span className="light-title">LIGHT CONTROL</span>
+        <span className="light-auto">AUTO</span>
+      </div>
+
+      <div className="light-mode-display">
+        <div
+          className={`light-preview ${settings.mode.toLowerCase()}`}
+          style={{
+            background: settings.color,
+            boxShadow: `0 0 ${settings.intensity / 2}px ${settings.color}`,
+          }}
+        />
+        <div className="light-mode-info">
+          <div className="light-mode-name">{settings.mode}</div>
+          <div className="light-mode-desc">{settings.description}</div>
+        </div>
+      </div>
+
+      <div className="light-params">
+        <div className="light-param">
+          <span className="param-label">Color</span>
+          <span
+            className="param-color"
+            style={{ background: settings.color }}
+          />
+          <span className="param-value">{settings.color}</span>
+        </div>
+        <div className="light-param">
+          <span className="param-label">Intensity</span>
+          <div className="param-bar">
+            <div
+              className="param-fill"
+              style={{
+                width: `${settings.intensity}%`,
+                background: settings.color,
+              }}
+            />
+          </div>
+          <span className="param-value">{settings.intensity}%</span>
+        </div>
+        <div className="light-param">
+          <span className="param-label">BPM Sync</span>
+          <span className="param-value">
+            {settings.bpm > 0 ? settings.bpm : "—"}
+          </span>
+        </div>
+      </div>
+
+      <div className="light-fixtures">
+        <div className="fixtures-label">DMX Fixtures (8ch)</div>
+        <div className="fixtures-grid">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div
+              key={i}
+              className={`fixture ${settings.mode.toLowerCase()}`}
+              style={{
+                background: settings.color,
+                opacity: 0.3 + (settings.intensity / 100) * 0.7,
+                animationDelay: `${i * 0.1}s`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // COMPONENTS
-// ============================================================================
 
 function LiveVideoFeed({ frameData, width, height }) {
   const canvasRef = useRef(null);
@@ -174,135 +254,46 @@ function LiveVideoFeed({ frameData, width, height }) {
   );
 }
 
-/**
- * FIXED HYPE GAUGE
- *
- * The issue was the arc path and stroke-dasharray calculation.
- * This version uses a proper SVG arc that goes from left to right
- * without any breaks.
- */
-function HypeGauge({ value }) {
-  // Clamp value between 0 and 1
-  const clampedValue = Math.max(0, Math.min(1, value));
-
-  // Arc parameters
-  const radius = 70;
-  const strokeWidth = 12;
-  const centerX = 100;
-  const centerY = 100;
-
-  // Arc goes from 225° to -45° (270° sweep, bottom-left to bottom-right)
-  const startAngle = 225 * (Math.PI / 180);
-  const endAngle = -45 * (Math.PI / 180);
-  const totalAngle = 270 * (Math.PI / 180);
-
-  // Calculate arc length
-  const circumference = 2 * Math.PI * radius;
-  const arcLength = (totalAngle / (2 * Math.PI)) * circumference;
-
-  // How much of the arc to fill based on value
-  const fillLength = arcLength * clampedValue;
-
-  // Calculate start and end points of the arc
-  const startX = centerX + radius * Math.cos(startAngle);
-  const startY = centerY - radius * Math.sin(startAngle);
-  const endX = centerX + radius * Math.cos(endAngle);
-  const endY = centerY - radius * Math.sin(endAngle);
-
-  // SVG arc path (large arc, clockwise)
-  const arcPath = `M ${startX} ${startY} A ${radius} ${radius} 0 1 1 ${endX} ${endY}`;
-
-  // Needle rotation: 0% = -135°, 100% = 135°
-  const needleRotation = -135 + clampedValue * 270;
-
-  // Color: red (0) to green (120) based on value
-  const hue = clampedValue * 120;
-  const color = `hsl(${hue}, 100%, 50%)`;
-
-  return (
-    <div className="hype-gauge">
-      <svg viewBox="0 0 200 200" className="gauge-svg">
-        {/* Background arc (gray) */}
-        <path
-          d={arcPath}
-          fill="none"
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-
-        {/* Filled arc (colored) */}
-        <path
-          d={arcPath}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={`${fillLength} ${arcLength}`}
-          style={{
-            filter: `drop-shadow(0 0 8px ${color})`,
-            transition: "stroke-dasharray 0.3s ease-out",
-          }}
-        />
-
-        {/* Needle */}
-        <g
-          transform={`rotate(${needleRotation} ${centerX} ${centerY})`}
-          style={{ transition: "transform 0.3s ease-out" }}
-        >
-          <line
-            x1={centerX}
-            y1={centerY}
-            x2={centerX}
-            y2={centerY - radius + 15}
-            stroke="white"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <circle cx={centerX} cy={centerY} r="8" fill="white" />
-        </g>
-
-        {/* Center text */}
-        <text
-          x={centerX}
-          y={centerY + 35}
-          textAnchor="middle"
-          className="gauge-text"
-        >
-          {(clampedValue * 100).toFixed(0)}%
-        </text>
-        <text
-          x={centerX}
-          y={centerY + 55}
-          textAnchor="middle"
-          className="gauge-label"
-        >
-          HYPE
-        </text>
-      </svg>
-    </div>
-  );
-}
-
-function EnergyBar({ value, max = 15 }) {
+function MetricBar({ label, value, max, type }) {
   const pct = Math.min(100, (value / max) * 100);
-  const hue = Math.min(120, pct * 1.2);
+
+  // Hype: 0% = red, 100% = green
+  // Energy: 0% = blue, 100% = orange/red
+  let color, gradient;
+  if (type === "hype") {
+    const hue = (pct / 100) * 120;
+    color = `hsl(${hue}, 100%, 50%)`;
+    gradient = `linear-gradient(90deg, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%))`;
+  } else {
+    const hue = 200 - (pct / 100) * 160;
+    color = `hsl(${hue}, 100%, 50%)`;
+    gradient = `linear-gradient(90deg, hsl(200, 100%, 50%), hsl(60, 100%, 50%), hsl(20, 100%, 50%))`;
+  }
 
   return (
-    <div className="energy-bar">
-      <div className="energy-label">ENERGY</div>
-      <div className="energy-track">
+    <div className="metric-bar">
+      <div className="metric-label">{label}</div>
+      <div className="metric-track">
         <div
-          className="energy-fill"
+          className="metric-fill"
           style={{
             width: `${pct}%`,
-            background: `linear-gradient(90deg, hsl(${
-              hue * 0.3
-            }, 100%, 50%), hsl(${hue}, 100%, 50%))`,
+            background: gradient,
+            clipPath: `inset(0 ${100 - pct}% 0 0)`,
+          }}
+        />
+        <div
+          className="metric-glow"
+          style={{
+            left: `${pct}%`,
+            background: color,
+            boxShadow: `0 0 15px ${color}, 0 0 30px ${color}`,
           }}
         />
       </div>
-      <div className="energy-value">{value.toFixed(1)}</div>
+      <div className="metric-value" style={{ color }}>
+        {type === "hype" ? `${pct.toFixed(0)}%` : value.toFixed(1)}
+      </div>
     </div>
   );
 }
@@ -316,9 +307,7 @@ function Heatmap({ data, zones }) {
       <div className="heatmap-title">ENERGY ZONES</div>
       <div
         className="heatmap-grid"
-        style={{
-          gridTemplateColumns: `repeat(${data[0]?.length || 8}, 1fr)`,
-        }}
+        style={{ gridTemplateColumns: `repeat(${data[0]?.length || 8}, 1fr)` }}
       >
         {data.map((row, i) =>
           row.map((val, j) => {
@@ -329,7 +318,7 @@ function Heatmap({ data, zones }) {
             return (
               <div
                 key={`${i}-${j}`}
-                className={`heatmap-cell ${zone}`}
+                className="heatmap-cell"
                 style={{
                   backgroundColor: `hsla(${h}, 100%, ${30 + intensity * 40}%, ${
                     0.3 + intensity * 0.7
@@ -348,30 +337,18 @@ function Heatmap({ data, zones }) {
   );
 }
 
-function StatCard({ icon, value, label }) {
-  return (
-    <div className="stat-card">
-      <span className="stat-icon">{icon}</span>
-      <div className="stat-info">
-        <div className="stat-value">{value}</div>
-        <div className="stat-label">{label}</div>
-      </div>
-    </div>
-  );
-}
-
 function GenreRankings({ genres, checkins, totalCheckins }) {
   const maxCount = genres[0]?.count || 1;
 
   return (
     <div className="genre-panel">
       <div className="genre-header">
-        <div className="genre-title">🎵 CROWD MUSIC TASTE</div>
+        <div className="genre-title">CROWD MUSIC TASTE</div>
         <div className="checkin-count">{totalCheckins} guests</div>
       </div>
 
       <div className="genre-list">
-        {genres.slice(0, 8).map((genre, i) => (
+        {genres.slice(0, 6).map((genre, i) => (
           <div
             key={genre.name}
             className={`genre-item ${i < 3 ? "top-three" : ""}`}
@@ -386,21 +363,21 @@ function GenreRankings({ genres, checkins, totalCheckins }) {
                 style={{ width: `${(genre.count / maxCount) * 100}%` }}
               />
             </div>
-            <span className="genre-count">{genre.count} people</span>
+            <span className="genre-count">{genre.count}</span>
           </div>
         ))}
       </div>
 
       <div className="recent-checkins">
-        <div className="checkins-title">📱 Recent Check-ins</div>
-        {checkins.slice(0, 4).map((c, i) => (
+        <div className="checkins-title">Recent Check-ins</div>
+        {checkins.slice(0, 3).map((c, i) => (
           <div key={i} className="checkin-item">
             <span className="checkin-name">{c.name}</span>
             <span className="checkin-time">
               {c.time < 1 ? "just now" : `${Math.floor(c.time)}m ago`}
             </span>
             <div className="checkin-genres">
-              {c.genres.map((g) => (
+              {c.genres.slice(0, 2).map((g) => (
                 <span key={g} className="genre-tag">
                   {g}
                 </span>
@@ -409,25 +386,15 @@ function GenreRankings({ genres, checkins, totalCheckins }) {
           </div>
         ))}
       </div>
-
-      <div className="qr-prompt">
-        <div className="qr-text">
-          📲 Scan QR at entrance → Connect Spotify → Get FREE drink!
-        </div>
-      </div>
     </div>
   );
 }
 
-// ============================================================================
-// MAIN APP
-// ============================================================================
+// Main App
 
 export default function App() {
   const [connected, setConnected] = useState(false);
   const [data, setData] = useState(null);
-
-  // Simulated genre data (always runs for demo)
   const { genres, checkins, totalCheckins } = useSimulatedCheckins(true);
 
   useEffect(() => {
@@ -437,15 +404,11 @@ export default function App() {
     });
 
     socket.on("connect", () => {
-      console.log("Connected!");
       setConnected(true);
     });
-
     socket.on("disconnect", () => {
-      console.log("Disconnected");
       setConnected(false);
     });
-
     socket.on("vibe_update", (payload) => {
       setData(payload);
     });
@@ -456,7 +419,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1 className="logo">◉ VIBE-CHECK</h1>
+        <h1 className="logo">VIBE-CHECK</h1>
         <div className={`status ${connected ? "online" : "offline"}`}>
           <span className="status-dot" />
           {connected ? "LIVE" : "CAMERA OFFLINE"}
@@ -469,62 +432,62 @@ export default function App() {
       </header>
 
       <main className="main">
-        {/* LEFT COLUMN: Video + Genre List */}
-        <div className="left-column">
-          {/* Video Feed (smaller) */}
-          {data ? (
-            <LiveVideoFeed
-              frameData={data.frame}
-              width={data.frameWidth}
-              height={data.frameHeight}
-            />
-          ) : (
-            <div className="video-placeholder">
-              <div className="placeholder-content">
+        {/* TOP SECTION (~1/3): Video + Bars */}
+        <div className="top-section">
+          <div className="video-wrapper">
+            {data ? (
+              <LiveVideoFeed
+                frameData={data.frame}
+                width={data.frameWidth}
+                height={data.frameHeight}
+              />
+            ) : (
+              <div className="video-placeholder">
                 <div className="spinner" />
-                <p>Connecting to camera...</p>
-                <p className="hint">Run: python main.py</p>
+                <p>Waiting for camera...</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Genre Rankings (under video) */}
+          <div className="bars-wrapper">
+            <MetricBar
+              label="HYPE"
+              value={data?.hypeScore || 0}
+              max={1}
+              type="hype"
+            />
+            <MetricBar
+              label="ENERGY"
+              value={data?.meanEnergy || 0}
+              max={15}
+              type="energy"
+            />
+          </div>
+        </div>
+
+        {/* BOTTOM SECTION (~2/3): Heatmap + Genres + Lights */}
+        <div className="bottom-section">
+          <div className="heatmap-wrapper">
+            {data ? (
+              <Heatmap data={data.heatmap} zones={data.zones} />
+            ) : (
+              <div className="heatmap-placeholder">
+                <div className="heatmap-title">ENERGY ZONES</div>
+                <p>Waiting for data...</p>
+              </div>
+            )}
+          </div>
+
           <GenreRankings
             genres={genres}
             checkins={checkins}
             totalCheckins={totalCheckins}
           />
-        </div>
 
-        {/* RIGHT COLUMN: Stats + Hype + Heatmap */}
-        <div className="right-column">
-          {/* Stats Row */}
-          <div className="stats-row">
-            <StatCard
-              icon="👥"
-              value={data?.peopleCount || 0}
-              label="In Frame"
-            />
-            <StatCard
-              icon="🙌"
-              value={`${((data?.handsUpRatio || 0) * 100).toFixed(0)}%`}
-              label="Hands Up"
-            />
-            <StatCard
-              icon="⚡"
-              value={(data?.meanEnergy || 0).toFixed(1)}
-              label="Energy"
-            />
-          </div>
-
-          {/* Hype Gauge */}
-          <HypeGauge value={data?.hypeScore || 0} />
-
-          {/* Energy Bar */}
-          <EnergyBar value={data?.meanEnergy || 0} />
-
-          {/* Heatmap */}
-          {data && <Heatmap data={data.heatmap} zones={data.zones} />}
+          <LightControlPanel
+            hypeScore={data?.hypeScore || 0}
+            energy={data?.meanEnergy || 0}
+          />
         </div>
       </main>
     </div>

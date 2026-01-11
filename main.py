@@ -66,9 +66,9 @@ if INFLUX_ENABLED and INFLUX_AVAILABLE:
     try:
         influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
         influx_write_api = influx_client.write_api(write_options=ASYNCHRONOUS)
-        print(f"✓ InfluxDB connected: {INFLUX_URL}")
+        print(f"InfluxDB connected: {INFLUX_URL}")
     except Exception as e:
-        print(f"✗ InfluxDB connection failed: {e}")
+        print(f"InfluxDB connection failed: {e}")
         INFLUX_ENABLED = False
 
 # SOCKET.IO SERVER
