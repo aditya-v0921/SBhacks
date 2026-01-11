@@ -42,7 +42,7 @@ JPEG_QUALITY = 70
 MIN_PEOPLE_FOR_HYPE = 1  # Set to 2+ to require multiple people
 
 # How many people are needed for "full crowd"
-FULL_CROWD_SIZE = 4  # With 4+ people, crowd multiplier = 1.0
+FULL_CROWD_SIZE = 3  # With 3+ people, crowd multiplier = 1.0
 
 # Weights for hype calculation
 WEIGHT_HANDS_UP = 0.5
